@@ -115,41 +115,26 @@ void constructVCS(size_t n, size_t k, cv::Mat image) {
     }
     // Построение матриц S^0 и S^1
     std::deque < std::vector<size_t>> S0, S1;
-    if (k % 2) {
-        if (r % 2) 
-            for (int j = 0; j < n; j += 2) {
-                if (j == r + 1)
-                    j = n - r;
-                S0.push_back(createBooleanMatrix(n, j, c[j > r ? n - j : j]));
-                S1.push_back(createBooleanMatrix(n, j + 1, c[j > r ? n - j - 1 : j + 1]));
-            }
-        else 
-            for (int j = 0; j < n; j += 2) {
-                S0.push_back(createBooleanMatrix(n, j, c[j > r ? n - j : j]));
-                if (j == r)
-                    j = n - r - 1;
-                S1.push_back(createBooleanMatrix(n, j + 1, c[j > r ? n - j - 1 : j + 1]));
-            }
+    if (k % 2) { 
+        for (int j = 0; j < n; j += 2) {
+            if (r%2 && j == r + 1)
+                j = n - r;
+            S0.push_back(createBooleanMatrix(n, j, c[j > r ? n - j : j]));
+            if (r % 2 == 0 && j == r)
+                j = n - r - 1;
+            S1.push_back(createBooleanMatrix(n, j + 1, c[j > r ? n - j - 1 : j + 1]));
+        }
     }
     else {
-        if (r % 2) {
-            for (int j = 0; j < n; j += 2) {
-                if (j == r + 1)
-                    j = n - r + 1;
-                S0.push_back(createBooleanMatrix(n, j, c[j > r ? n - j + 1 : j]));
-                S1.push_back(createBooleanMatrix(n, j + 1, c[j > r ? n - j: j + 1]));
-            }
-            S0.push_back(createBooleanMatrix(n, n, c[1]));
+        for (int j = 0; j < n; j += 2) {
+            if (r % 2 && j == r + 1)
+                j = n - r + 1;
+            S0.push_back(createBooleanMatrix(n, j, c[j > r ? n - j + 1 : j]));
+            if (r % 2 == 0 && j == r)
+                j = n - r;
+            S1.push_back(createBooleanMatrix(n, j + 1, c[j > r ? n - j: j + 1]));
         }
-        else {
-            for (int j = 0; j < n; j += 2) {
-                S0.push_back(createBooleanMatrix(n, j, c[j > r ? n - j + 1 : j]));
-                if (j == r)
-                    j = n - r;
-                S1.push_back(createBooleanMatrix(n, j + 1, c[j > r ? n - j : j + 1]));
-            }
-            S0.push_back(createBooleanMatrix(n, n, c[1]));
-        }
+        S0.push_back(createBooleanMatrix(n, n, c[1]));
     }
     encryptImage(image, S0, S1, n, k);
 }
