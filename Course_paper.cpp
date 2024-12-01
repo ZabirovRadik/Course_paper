@@ -6,11 +6,9 @@
 #include <vector>
 #include <deque>
 #include <random>
-#include <ctime>
 
 #include <iostream>
 
-//! [includes]
 
 bool is_black_white(const cv::Mat& image) {
     for (size_t y = 0; y < image.rows; y++) {
@@ -30,9 +28,6 @@ cv::Mat visual_cypher(char* path) {
     }
     cv::Mat grayImage;
     cv::cvtColor(image, grayImage, cv::COLOR_BGR2GRAY);
-    //cv::namedWindow("Image", cv::WINDOW_NORMAL);
-    //cv::imshow("Image", grayImage);
-    //cv::waitKey(0);
     return grayImage;
 }
 
@@ -52,89 +47,101 @@ size_t binomial(size_t n, size_t k)
 }
 
 
-std::vector<size_t> createBooleanMatrix(size_t n, size_t i, size_t c) {
-    size_t num_columns = binomial(n, i);
-    std::vector<size_t> matrix;
+std::vector<std::vector<size_t>> createBooleanMatrix(size_t n, size_t i, size_t c) {
+    std::vector<size_t> row(n, 0);
+    std::fill(row.begin(), row.begin() + i, c);
 
-    std::vector<int> vec(n, 0);
-    std::fill(vec.begin(), vec.begin() + i, 1);
-
+    std::vector<std::vector<size_t>> matrix;
     do {
-        matrix.insert(matrix.end(), vec.begin(), vec.end());
-    } while (std::prev_permutation(vec.begin(), vec.end()));
+        matrix.push_back(row);
+    } while (std::prev_permutation(row.begin(), row.end()));
 
     return matrix;
 }
 
 
-std::vector < std::vector < std::vector<size_t>>> encryptImage(
+
+
+std::vector<std::vector<std::vector<size_t>>> encryptImage(
     const cv::Mat& image,
-    const std::deque <std::vector < size_t>>& S0,
-    const std::deque <std::vector < size_t>>& S1,
-    size_t n, size_t k
-)
+    std::vector< std::vector<size_t>>& S0,
+    std::vector< std::vector<size_t>>& S1,
+    size_t n, size_t k)
 {
+    // Получаем размеры изображения
     size_t rows = image.rows;
     size_t cols = image.cols;
 
-    // Создаём n долей
-    std::vector < std::vector < std::vector<size_t>>> shares(n, std::vector < std::vector < size_t>>(rows, std::vector<size_t>(cols)));
+    // Разбиваем изображение на n подизображений
+    std::vector<std::vector<std::vector<size_t>>> encrypted_image(n);
 
-    for (size_t i = 0; i < rows; ++i) {
-        for (size_t j = 0; j < cols; ++j) {
-            // Выбор матрицы S0 или S1 в зависимости от пикселя
-            std::vector < std::vector <size_t>> S;
-            if (image.at<uchar>(i, j))
-                for (size_t share = 0; share < n; ++share) {
-                    shares[share][i][j] = S1[share][j];
+    // Итерируемся по каждому подизображению
+    for (size_t i = 0; i < n; ++i) {
+        encrypted_image[i].resize(k);
+        for (size_t j = 0; j < k; ++j) {
+            // Получаем размеры подизображения
+            size_t sub_rows = rows / n;
+            size_t sub_cols = cols / n;
+
+            // Извлекаем подизображение
+            cv::Mat sub_image = image(cv::Rect(i * sub_cols, j * sub_rows, sub_cols, sub_rows));
+
+            // Преобразуем подизображение в вектор пикселей
+            std::vector<size_t> pixels(sub_rows * sub_cols);
+            for (size_t y = 0; y < sub_rows; ++y) {
+                for (size_t x = 0; x < sub_cols; ++x) {
+                    pixels[y * sub_cols + x] = sub_image.at<uchar>(y, x) > 0 ? 1 : 0;
                 }
-            else
-                for (size_t share = 0; share < n; ++share) {
-                    shares[share][i][j] = S0[share][j];
+            }
+
+            // Кодируем подизображение с помощью матриц S0 и S1
+            if (pixels.size() == S0[j].size()) {
+                encrypted_image[i][j].resize(S0[j].size());
+                for (size_t p = 0; p < pixels.size(); ++p) {
+                    encrypted_image[i][j][p] = pixels[p] * S0[j][p] + (1 - pixels[p]) * S1[j][p];
                 }
-
-
-            // Распределяем бит из столбца между долями
-
+            }
         }
     }
-    return shares;
-}
 
-void k_odd(size_t n, size_t k, cv::Mat image) {
-
+    return encrypted_image;
 }
 
 void constructVCS(size_t n, size_t k, cv::Mat image) {
-    if (k % 2 == 0)
-        k_odd(n, k, image);
     size_t r = k / 2;
+    if (n <= k || n - r - 1 < 1)
+        return;
     std::vector<size_t> c(r + 1);
     for (size_t j = 0; j <= r; ++j) {
         c[j] = binomial(n - r - 1 - j, r - j);
     }
     // Построение матриц S^0 и S^1
-    std::deque < std::vector<size_t>> S0, S1;
+    std::vector <std::vector<size_t>> S0, S1;
     if (k % 2) { 
         for (int j = 0; j < n; j += 2) {
             if (r%2 && j == r + 1)
                 j = n - r;
-            S0.push_back(createBooleanMatrix(n, j, c[j > r ? n - j : j]));
+            auto Tmp = createBooleanMatrix(n, j, c[j > r ? n - j : j]);
+            S0.insert(S0.end(), Tmp.begin(), Tmp.end());
             if (r % 2 == 0 && j == r)
                 j = n - r - 1;
-            S1.push_back(createBooleanMatrix(n, j + 1, c[j > r ? n - j - 1 : j + 1]));
+            Tmp = createBooleanMatrix(n, j + 1, c[j > r ? n - j - 1 : j + 1]);
+            S1.insert(S1.end(), Tmp.begin(), Tmp.end());
         }
     }
     else {
         for (int j = 0; j < n; j += 2) {
             if (r % 2 && j == r + 1)
                 j = n - r + 1;
-            S0.push_back(createBooleanMatrix(n, j, c[j > r ? n - j + 1 : j]));
+            auto Tmp = createBooleanMatrix(n, j, c[j > r ? n - j + 1 : j]);
+            S0.insert(S0.end(), Tmp.begin(), Tmp.end());
             if (r % 2 == 0 && j == r)
                 j = n - r;
-            S1.push_back(createBooleanMatrix(n, j + 1, c[j > r ? n - j: j + 1]));
+            Tmp = createBooleanMatrix(n, j + 1, c[j > r ? n - j: j + 1]);
+            S1.insert(S1.end(), Tmp.begin(), Tmp.end());
         }
-        S0.push_back(createBooleanMatrix(n, n, c[1]));
+        auto Tmp = createBooleanMatrix(n, n, c[1]);
+        S0.insert(S0.end(), Tmp.begin(), Tmp.end());       
     }
     encryptImage(image, S0, S1, n, k);
 }
@@ -144,7 +151,7 @@ void constructVCS(size_t n, size_t k, cv::Mat image) {
 
 int main(){
     size_t n = 17;
-    size_t k = 12;
+    size_t k = 10;
     size_t r = k / 2;
     constructVCS(n, k, visual_cypher("D:\\Course_paper\\table.png"));
     return 0;
