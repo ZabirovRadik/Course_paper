@@ -106,36 +106,76 @@ void k_odd(size_t n, size_t k, cv::Mat image) {
 }
 
 void constructVCS(size_t n, size_t k, cv::Mat image) {
-    if (k % 2 == 0)
-        k_odd(n, k, image);
     size_t r = k / 2;
-    std::vector<size_t> c(r + 1);
-    for (size_t j = 0; j <= r; ++j) {
-        c[j] = binomial(n - r - 1 - j, r - j);
-    }
-    // Построение матриц S^0 и S^1
-    std::deque < std::vector<size_t>> S0, S1;
+    std::vector<size_t> c;
+    std::deque<size_t> is0, is1;
+    for (size_t j = 0; j <= r; ++j)
+        c.push_back(binomial(n - r - 1 - j, r - j));
+    std::deque < std::vector<size_t>> S0, S1;      // Построение матриц S^0 и S^1
     if (k % 2) { 
         for (int j = 0; j < n; j += 2) {
-            if (r%2 && j == r + 1)
-                j = n - r;
-            S0.push_back(createBooleanMatrix(n, j, c[j > r ? n - j : j]));
-            if (r % 2 == 0 && j == r)
-                j = n - r - 1;
-            S1.push_back(createBooleanMatrix(n, j + 1, c[j > r ? n - j - 1 : j + 1]));
+            if (r%2 && j == r + 1) {
+                if (n - r + 1 < n)
+                    j = n - r + 1;
+                else
+                    break;
+            }
+            S0.push_back(createBooleanMatrix(n, j, c[j > r ? r - (j - 2) % r : j]));
+            is0.push_back(j > r ? r - (j + 2) % r : j);
+            if (r % 2 == 0 && j == r) {
+                if (n - r - 1 < n)
+                    j = n - r - 1;
+                else
+                    break;
+            }
+            S1.push_back(createBooleanMatrix(n, j + 1, c[j > r ? r - (j - 1) % r : j + 1]));
+            is1.push_back(j > r ? r - (j + 1) % r : j + 1);
+        }
+        if (r == 1) {
+            S0.push_back(createBooleanMatrix(n, n, c[1]));
+            is0.push_back(1);
         }
     }
     else {
         for (int j = 0; j < n; j += 2) {
-            if (r % 2 && j == r + 1)
-                j = n - r + 1;
-            S0.push_back(createBooleanMatrix(n, j, c[j > r ? n - j + 1 : j]));
-            if (r % 2 == 0 && j == r)
-                j = n - r;
-            S1.push_back(createBooleanMatrix(n, j + 1, c[j > r ? n - j: j + 1]));
+            if (r % 2 && j == r + 1) {
+                if (n - r + 1 < n)
+                    j = n - r + 1;
+                else
+                    break;
+            }
+            S0.push_back(createBooleanMatrix(n, j, c[j > r ? r - (j + 2) % r : j]));
+            is0.push_back(j > r ? r - (n + 1 - j) % r : j);
+            if (r % 2 == 0 && j == r) {
+                if (n - r < n)
+                    j = n - r;
+                else
+                    break;
+            }
+            S1.push_back(createBooleanMatrix(n, j + 1, c[j > r ? r - (j + 1) % r : j + 1]));
+            is1.push_back(j > r ? r - (n + 2 - j) % r : j + 1);
         }
         S0.push_back(createBooleanMatrix(n, n, c[1]));
+        is0.push_back(1);   
     }
+    /*for (size_t i = 0; i < S0.size(); ++i) {
+        for (size_t j = 0; j < S0[i].size(); ++j) {
+            std::cout << S0[i][j] << " ";
+        }
+        std::cout << std::endl;
+    }
+    std::cout << "S1" << std::endl;
+    for (size_t i = 0; i < S1.size(); ++i) {
+        for (size_t j = 0; j < S1[i].size(); ++j) {
+            std::cout << S1[i][j] << " ";
+        }
+        std::cout << std::endl;
+    }*/
+    for (auto lo : is0)
+        std::cout << lo << " ";
+    std::cout << std::endl;
+    for (auto lo : is1)
+        std::cout << lo << " ";
     encryptImage(image, S0, S1, n, k);
 }
 
@@ -144,7 +184,7 @@ void constructVCS(size_t n, size_t k, cv::Mat image) {
 
 int main(){
     size_t n = 17;
-    size_t k = 12;
+    size_t k = 10;
     size_t r = k / 2;
     constructVCS(n, k, visual_cypher("D:\\Course_paper\\table.png"));
     return 0;
