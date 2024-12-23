@@ -2,21 +2,10 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui.hpp>
 #include <algorithm>
+#include <filesystem>
 #include <vector>
 #include <random>
 #include <iostream>
-
-
-bool is_black_white(const cv::Mat& image) {
-    for (size_t y = 0; y < image.rows; y++) {
-        for (size_t x = 0; x < image.cols; x++) {
-            cv::Vec3b pixel = image.at<cv::Vec3b>(y, x);
-            if (pixel[0] != pixel[1] || pixel[1] != pixel[2] || (pixel[0] != 0 && pixel[0] != 255))
-                return false;
-        }
-    }
-    return true;
-}
 
 
 cv::Mat visual_cypher(const std::string& path) {
@@ -63,11 +52,25 @@ std::vector<std::vector<size_t>> create_boolean_matrix(size_t n,
 }
 
 
+bool make_folder(const std::string& folder) {
+    if (!std::filesystem::exists(folder)) {
+        std::filesystem::create_directory(folder);
+        std::cout << "Folder created: " << folder << std::endl;
+        return true;
+    }
+    return false;
+}
+
+
 void encode_and_save_images(const cv::Mat& image,
     const std::vector<std::vector<size_t>>& S0,
     const std::vector<std::vector<size_t>>& S1,
-    const std::string& path_to_encoded_imgs,
-    int n) {
+    const std::string& folder,
+    int n,
+    const std::string& name_files
+) {
+
+    make_folder(folder);
     int rows = image.rows;
     int cols = image.cols;
     size_t column_length = S0[0].size();
@@ -93,7 +96,7 @@ void encode_and_save_images(const cv::Mat& image,
                 }
             }
         }
-        std::string filename = path_to_encoded_imgs + std::to_string(i) + ".jpg";
+        std::string filename = folder + name_files + std::to_string(i) + ".jpg";
 
         if (!cv::imwrite(filename, encodedImage)) {
             std::cerr << "Error: can't save image " << filename << "!" << std::endl;
@@ -107,10 +110,12 @@ void encode_and_save_images(const cv::Mat& image,
 
 void encrypt_image(size_t n,
     size_t k,
-    const std::string& path_to_image,
-    const std::string& path_to_encoded_imgs) {
+    const std::string& image_path,
+    const std::string& folder,
+    const std::string& files_names
+) {
 
-    cv::Mat gray_image = visual_cypher(path_to_image);
+    cv::Mat gray_image = visual_cypher(image_path);
     size_t r = k / 2;
     bool is_odd = k % 2;
     if (n <= k || n - r - 1 < 1)
@@ -147,5 +152,5 @@ void encrypt_image(size_t n,
         auto Tmp = create_boolean_matrix(n, n, c[1]);
         S0.insert(S0.end(), Tmp.begin(), Tmp.end());
     }
-    encode_and_save_images(gray_image, S0, S1, path_to_encoded_imgs, n);
+    encode_and_save_images(gray_image, S0, S1, folder, n, files_names);
 }

@@ -11,6 +11,10 @@
 *.sln.docstates
 /encrypted_imgs
 /decrypted
+table.png
+yy.jpg
+Cat.jpg
+map.jpg
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 

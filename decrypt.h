@@ -1,23 +1,30 @@
 #include <iostream>
 #include <filesystem>
 
+const std::vector<cv::Mat>& jpgs_from_folder(std::vector<cv::Mat>& encoded_images, const std::string& folder) {
+    for (const auto& entry : std::filesystem::directory_iterator(folder)) {
+        if (entry.path().extension() == ".jpg") {
+            cv::Mat encoded_image = cv::imread(entry.path().string(), cv::IMREAD_GRAYSCALE);
+            if (encoded_image.empty()) {
+                std::cerr << "Error with " << entry.path().string() << "!" << std::endl;
+                continue;
+            }
+            encoded_images.push_back(encoded_image);
+        }
+    }
+    return encoded_images;
+}
+
+
 cv::Mat decode_images(
     int n,
-    int num_imgs,
-    const std::string& path_encoded_files,
+    const std::string& folder,
     const std::string& path_to_decoded_file) {
 
     std::vector<cv::Mat> encoded_images;
-    for (int i = 0; i < num_imgs; ++i) {
-        std::string filename = path_encoded_files + std::to_string(i) + ".jpg";
-        cv::Mat encoded_image = cv::imread(filename, cv::IMREAD_GRAYSCALE);
-        if (encoded_image.empty()) {
-            std::cerr << "Error with " << filename << "!" << std::endl;
-            return cv::Mat();
-        }
-        encoded_images.push_back(encoded_image);
-    }
+    jpgs_from_folder(encoded_images, folder);
 
+    size_t num_imgs = encoded_images.size();
     int rows = encoded_images[0].rows;
     int cols = encoded_images[0].cols;
 
