@@ -96,7 +96,7 @@ void encode_and_save_images(const cv::Mat& image,
                 }
             }
         }
-        std::string filename = folder + name_files + std::to_string(i) + ".jpg";
+        std::string filename = folder + "\\" + name_files + std::to_string(i) + ".jpg";
 
         if (!cv::imwrite(filename, encodedImage)) {
             std::cerr << "Error: can't save image " << filename << "!" << std::endl;
@@ -149,8 +149,8 @@ void encrypt_image(size_t n,
             auto Tmp2 = create_boolean_matrix(n, j + 1, c[j > r ? n - j : j + 1]);
             S1.insert(S1.end(), Tmp2.begin(), Tmp2.end());
         }
-        auto Tmp = create_boolean_matrix(n, n, c[1]);
-        S0.insert(S0.end(), Tmp.begin(), Tmp.end());
+        auto Tmp = create_boolean_matrix(n, n, c[0]);
+        S1.insert(S1.end(), Tmp.begin(), Tmp.end());
     }
     encode_and_save_images(gray_image, S0, S1, folder, n, files_names);
 }
