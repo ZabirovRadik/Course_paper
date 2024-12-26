@@ -1,3 +1,4 @@
+#include <iostream>
 #include "encrypt.h"
 #include "filesystem"
 #include "decrypt.h"
@@ -7,7 +8,14 @@ int main(int argc, char* argv[]) {
         if (argc != 7) {
             std::cerr << "Usage: " << argv[0] << "  Incorrect number of arguments" << argc << std::endl;
             return 1;
-        } 
+        }
+        try {
+            size_t n = std::stoul(argv[2]);
+            size_t k = std::stoul(argv[3]);
+        }
+        catch (const std::exception& e) {
+            throw std::invalid_argument(e.what());
+        }
         encrypt_image(
             std::stoul(argv[2]), //n
             std::stoul(argv[3]), //k
@@ -20,7 +28,13 @@ int main(int argc, char* argv[]) {
             std::cerr << "Usage: " << argv[0] << "  Incorrect number of arguments" << argc << std::endl;
             return 1;
         }
-        decode_images(
+        try {
+            size_t n = std::stoul(argv[2]);
+        }
+        catch (const std::exception& e) {
+            throw std::invalid_argument(e.what());
+        }
+        decrypt_images(
             std::stoul(argv[2]),  // n
             argv[3],              // folder of encoded files
             argv[4]               // path to result
