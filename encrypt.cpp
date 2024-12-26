@@ -100,6 +100,7 @@ void encrypt_and_save_images(const cv::Mat& image,
                     (image.at<uchar>(row, col) == 255)
                     ? S0[indices_s0[ind_s0++ % S0.size()]]
                     : S1[indices_s1[ind_s1++ % S1.size()]];
+
                 for (size_t i = 0; i < selected_ñolumn.size(); ++i) {
                     encoded_images[j].at<uchar>(row, col * column_length + i) =
                         static_cast<uchar>(selected_ñolumn[i]);
@@ -147,7 +148,7 @@ void encrypt_image(size_t n,
             S0.insert(S0.end(), Tmp1.begin(), Tmp1.end());
             if (r % 2 == 0 && j == r)
                 j = n - r - 1;
-            auto Tmp2 = create_boolean_matrix(n, j + 1, c[j > r ? n - j - 1 : j + 1]);
+            auto Tmp2 = create_boolean_matrix(n, j + 1, c[j > r ? n - j - 1 : (j + 1)%c.size()]);
             S1.insert(S1.end(), Tmp2.begin(), Tmp2.end());
         }
     }
@@ -159,7 +160,7 @@ void encrypt_image(size_t n,
             S0.insert(S0.end(), Tmp1.begin(), Tmp1.end());
             if (r % 2 == 0 && j == r)
                 j = n - r;
-            auto Tmp2 = create_boolean_matrix(n, j + 1, c[j > r ? n - j : j + 1]);
+            auto Tmp2 = create_boolean_matrix(n, j + 1, c[j > r ? n - j : (j + 1) % c.size()]);
             S1.insert(S1.end(), Tmp2.begin(), Tmp2.end());
         }
         auto Tmp = create_boolean_matrix(n, n, c[0]);

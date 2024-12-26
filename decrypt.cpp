@@ -43,13 +43,16 @@ cv::Mat decrypt_images(
 
     for (int y = 0; y < rows; ++y) {
         for (int x = 0; x < cols; x += n) {
-            int sum = 0;
+            int el = 0;
             for (int xi = x; xi < x + n; ++xi) {
                 for (int i = 0; i < num_imgs; ++i) {
-                    sum += encrypted_images[i].at<uchar>(y, xi);
+                    if (el != encrypted_images[i].at<uchar>(y, xi))
+                        el = 0;
+                    else
+                        el = 255;
                 }
             }
-            decrypted_images.at<uchar>(y, x / n) = static_cast<uchar>(sum / n / num_imgs >= 255 / 2 ? 0 : 255);
+            decrypted_images.at<uchar>(y, x / n) = el;
         }
     }
     if (!cv::imwrite(path_to_decrypted_file, decrypted_images)) {
