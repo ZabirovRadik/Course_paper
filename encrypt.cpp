@@ -80,14 +80,8 @@ void encrypt_and_save_images(const cv::Mat& image,
     int cols = image.cols;
     size_t column_length = S0[0].size();
     int newWidth = cols * column_length;
-    std::vector<size_t> indices_s0(S0.size());
-    std::vector<size_t> indices_s1(S1.size());
-    std::iota(indices_s0.begin(), indices_s0.end(), 0);
-    std::iota(indices_s1.begin(), indices_s1.end(), 0);
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::shuffle(indices_s0.begin(), indices_s0.end(), gen);
-    std::shuffle(indices_s1.begin(), indices_s1.end(), gen);
 
     cv::Mat encodedImage(rows, newWidth, CV_8U, cv::Scalar(0));
     std::vector<cv::Mat> encoded_images(n, encodedImage);
