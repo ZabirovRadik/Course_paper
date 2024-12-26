@@ -98,8 +98,8 @@ void encrypt_and_save_images(const cv::Mat& image,
             for (size_t j = 0; j < n; ++j) {
                 const std::vector<size_t>& selected_ñolumn =
                     (image.at<uchar>(row, col) == 255)
-                    ? S0[ind_s0++ % S0.size()]
-                    : S1[ind_s1++ % S1.size()];
+                    ? S0[indices_s0[ind_s0++ % S0.size()]]
+                    : S1[indices_s1[ind_s1++ % S1.size()]];
                 for (size_t i = 0; i < selected_ñolumn.size(); ++i) {
                     encoded_images[j].at<uchar>(row, col * column_length + i) =
                         static_cast<uchar>(selected_ñolumn[i]);

@@ -49,7 +49,7 @@ cv::Mat decrypt_images(
                     sum += encrypted_images[i].at<uchar>(y, xi);
                 }
             }
-            decrypted_images.at<uchar>(y, x / n) = static_cast<uchar>(sum / n / num_imgs >= 255 / 2 ? 255 : 0);
+            decrypted_images.at<uchar>(y, x / n) = static_cast<uchar>(sum / n / num_imgs >= 255 / 2 ? 0 : 255);
         }
     }
     if (!cv::imwrite(path_to_decrypted_file, decrypted_images)) {
