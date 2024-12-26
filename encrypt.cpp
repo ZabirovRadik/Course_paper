@@ -80,27 +80,22 @@ void encrypt_and_save_images(const cv::Mat& image,
     int cols = image.cols;
     size_t column_length = S0[0].size();
     int newWidth = cols * column_length;
-    std::vector<size_t> indices_s0(S0.size());
-    std::vector<size_t> indices_s1(S1.size());
-    std::iota(indices_s0.begin(), indices_s0.end(), 0);
-    std::iota(indices_s1.begin(), indices_s1.end(), 0);
+    std::vector<size_t> indices_s(S0.size());
+    std::iota(indices_s.begin(), indices_s.end(), 0);
     std::random_device rd;
     std::mt19937 gen(rd());
 
     cv::Mat encodedImage(rows, newWidth, CV_8U, cv::Scalar(0));
     std::vector<cv::Mat> encoded_images(n, encodedImage);
-    size_t ind_s0 = 0, ind_s1 = 0;
 
     for (int row = 0; row < rows; ++row) {
         for (int col = 0; col < cols; ++col) {
-            std::shuffle(indices_s0.begin(), indices_s0.end(), gen);
-            std::shuffle(indices_s1.begin(), indices_s1.end(), gen);
+            std::shuffle(indices_s.begin(), indices_s.end(), gen);
             for (size_t j = 0; j < n; ++j) {
                 const std::vector<size_t>& selected_ñolumn =
                     (image.at<uchar>(row, col) == 255)
-                    ? S0[indices_s0[ind_s0++ % S0.size()]]
-                    : S1[indices_s1[ind_s1++ % S1.size()]];
-
+                    ? S0[indices_s[j]]
+                    : S1[indices_s[j]];
                 for (size_t i = 0; i < selected_ñolumn.size(); ++i) {
                     encoded_images[j].at<uchar>(row, col * column_length + i) =
                         static_cast<uchar>(selected_ñolumn[i]);
