@@ -40,19 +40,21 @@ cv::Mat decrypt_images(
     int cols = encrypted_images[0].cols;
 
     cv::Mat decrypted_images(rows, cols / n, CV_8UC1, cv::Scalar(0));
-
     for (int y = 0; y < rows; ++y) {
         for (int x = 0; x < cols; x += n) {
-            int el = 0;
+            std::vector<size_t> els(n, 0);
             for (int xi = x; xi < x + n; ++xi) {
                 for (int i = 0; i < num_imgs; ++i) {
-                    if (el != encrypted_images[i].at<uchar>(y, xi))
-                        el = 0;
+                    if (els[i] != encrypted_images[i].at<uchar>(y, xi))
+                        els[i] = 0;
                     else
-                        el = 255;
+                        els[i] = 255;
                 }
             }
-            decrypted_images.at<uchar>(y, x / n) = el;
+            size_t sum = 0;
+            for (auto i : els)
+                sum += i;
+            decrypted_images.at<uchar>(y, x / n) = sum / n > 127 ? 255: 0;
         }
     }
     if (!cv::imwrite(path_to_decrypted_file, decrypted_images)) {
