@@ -92,14 +92,16 @@ void encrypt_and_save_images(const cv::Mat& image,
     cv::Mat encodedImage(rows, newWidth, CV_8U, cv::Scalar(0));
     std::vector<cv::Mat> encoded_images(n, encodedImage);
     size_t ind_s0 = 0, ind_s1 = 0;
+    std::uniform_int_distribution<> distS0(0, S0.size() - 1);
+    std::uniform_int_distribution<> distS1(0, S1.size() - 1);
 
     for (int row = 0; row < rows; ++row) {
         for (int col = 0; col < cols; ++col) {
             for (size_t j = 0; j < n; ++j) {
                 const std::vector<size_t>& selected_ñolumn =
                     (image.at<uchar>(row, col) == 255)
-                    ? S0[indices_s0[ind_s0++ % S0.size()]]
-                    : S1[indices_s1[ind_s1++ % S1.size()]];
+                    ? S0[distS0(gen)]
+                    : S1[distS1(gen)];
 
                 for (size_t i = 0; i < selected_ñolumn.size(); ++i) {
                     encoded_images[j].at<uchar>(row, col * column_length + i) =
