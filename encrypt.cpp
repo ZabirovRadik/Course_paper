@@ -25,7 +25,7 @@ size_t binomial(size_t n, size_t k) {
     if (k > n) return 0;
     if (k == 0 || k == n) return 1;
 
-    k = std::min(k, n - k); // Ñèììåòðèÿ C(n, k) == C(n, n-k)
+    k = std::min(k, n - k);
     unsigned long long result = 1;
 
     for (int i = 0; i < k; ++i) {
@@ -80,22 +80,26 @@ void encrypt_and_save_images(const cv::Mat& image,
     int cols = image.cols;
     size_t column_length = S0[0].size();
     int newWidth = cols * column_length;
+    std::vector<size_t> indices_s0(S0.size());
+    std::vector<size_t> indices_s1(S1.size());
+    std::iota(indices_s0.begin(), indices_s0.end(), 0);
+    std::iota(indices_s1.begin(), indices_s1.end(), 0);
     std::random_device rd;
     std::mt19937 gen(rd());
 
     cv::Mat encodedImage(rows, newWidth, CV_8U, cv::Scalar(0));
     std::vector<cv::Mat> encoded_images(n, encodedImage);
     size_t ind_s0 = 0, ind_s1 = 0;
-    std::uniform_int_distribution<> distS0(0, S0.size() - 1);
-    std::uniform_int_distribution<> distS1(0, S1.size() - 1);
 
     for (int row = 0; row < rows; ++row) {
         for (int col = 0; col < cols; ++col) {
+            std::shuffle(indices_s0.begin(), indices_s0.end(), gen);
+            std::shuffle(indices_s1.begin(), indices_s1.end(), gen);
             for (size_t j = 0; j < n; ++j) {
                 const std::vector<size_t>& selected_ñolumn =
                     (image.at<uchar>(row, col) == 255)
-                    ? S0[distS0(gen)]
-                    : S1[distS1(gen)];
+                    ? S0[indices_s0[ind_s0++ % S0.size()]]
+                    : S1[indices_s1[ind_s1++ % S1.size()]];
 
                 for (size_t i = 0; i < selected_ñolumn.size(); ++i) {
                     encoded_images[j].at<uchar>(row, col * column_length + i) =
@@ -156,11 +160,11 @@ void encrypt_image(size_t n,
             S0.insert(S0.end(), Tmp1.begin(), Tmp1.end());
             if (r % 2 == 0 && j == r)
                 j = n - r;
-            auto Tmp2 = create_boolean_matrix(n, j + 1, c[j > r ? n - j : (j + 1) % c.size()]);
+            if (j >= n)
+                break;
+            auto Tmp2 = create_boolean_matrix(n,  j + 1, c[j > r ? n - j : (j + 1) % c.size()]);
             S1.insert(S1.end(), Tmp2.begin(), Tmp2.end());
         }
-        auto Tmp = create_boolean_matrix(n, n, c[0]);
-        S0.insert(S0.end(), Tmp.begin(), Tmp.end());
     }
     encrypt_and_save_images(gray_image, S0, S1, folder, n, files_names);
 }
