@@ -16,24 +16,26 @@ cv::Mat read_binary(const std::string& path) {
     }
     cv::Mat gray_image;
     cv::cvtColor(image, gray_image, cv::COLOR_BGR2GRAY);
-    cv::threshold(gray_image, gray_image, 127, 255, cv::THRESH_BINARY);
+    cv::GaussianBlur(gray_image, gray_image, cv::Size(5, 5), 0);
+    cv::adaptiveThreshold(gray_image, gray_image, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY, 11, 2);
     return gray_image;
 }
 
 
-size_t binomial(size_t n, size_t k) {
-    if (k > n) return 0;
-    if (k == 0 || k == n) return 1;
-
-    k = std::min(k, n - k);
-    unsigned long long result = 1;
-
-    for (int i = 0; i < k; ++i) {
-        result *= (n - i);
-        result /= (i + 1);
+size_t binomial(size_t n,
+    size_t k)
+{
+    size_t l = k;
+    if (n < k) throw std::invalid_argument("n < k");
+    if (k > n / 2) l = n - k;
+    if (k == 1)  return n;
+    if (k == 0)  return 1;
+    size_t r = 1;
+    for (size_t i = 1; i <= l; ++i) {
+        r *= n - l + i;
+        r /= i;
     }
-
-    return result;
+    return r;
 }
 
 
@@ -68,46 +70,51 @@ bool make_folder(const std::string& folder) {
 
 
 void encrypt_and_save_images(const cv::Mat& image,
-    const std::vector<std::vector<size_t>>& S0,
-    const std::vector<std::vector<size_t>>& S1,
+    std::vector<std::vector<size_t>>& S0,
+    std::vector<std::vector<size_t>>& S1,
     const std::string& folder,
-    int n,
+    size_t n,
     const std::string& name_files
 ) {
-
+    cv::imwrite("D:\\Course_paper\\nnnn.png", image);
     make_folder(folder);
-    int rows = image.rows;
-    int cols = image.cols;
-    size_t column_length = S0[0].size();
-    int newWidth = cols * column_length;
+    size_t rows = image.rows;
+    size_t cols = image.cols;
+    size_t string_len = S0.size();
+    size_t new_width = cols * string_len;
     std::vector<size_t> indices_s(S0.size());
     std::iota(indices_s.begin(), indices_s.end(), 0);
-    std::random_device rd;
-    std::mt19937 gen(rd());
-
-    cv::Mat encodedImage(rows, newWidth, CV_8U, cv::Scalar(0));
-    std::vector<cv::Mat> encoded_images(n, encodedImage);
-
-    for (int row = 0; row < rows; ++row) {
-        for (int col = 0; col < cols; ++col) {
+    std::mt19937 gen(1444);
+    for (auto lo : S0) {
+        for (auto i : lo)
+            std::cout << i << " ";
+        std::cout << std::endl;
+    }
+    std::cout << std::endl;
+    for (auto lo : S1) {
+        for (auto i : lo)
+            std::cout << i << " ";
+        std::cout << std::endl;
+    }
+    cv::Mat encrypted_image(rows, new_width, CV_8U, cv::Scalar(255));
+    std::vector<cv::Mat> encrypted_images(n, encrypted_image);
+    for (size_t row = 0; row < rows; ++row) {
+        for (size_t col = 0; col < cols; ++col) {
             std::shuffle(indices_s.begin(), indices_s.end(), gen);
-            for (size_t j = 0; j < n; ++j) {
-                const std::vector<size_t>& selected_ñolumn =
-                    (image.at<uchar>(row, col) == 255)
-                    ? S0[indices_s[j]]
-                    : S1[indices_s[j]];
-                for (size_t i = 0; i < selected_ñolumn.size(); ++i) {
-                    encoded_images[j].at<uchar>(row, col * column_length + i) =
-                        static_cast<uchar>(selected_ñolumn[i]);
+            for (size_t j = 0; j < S0.size(); ++j) {
+                for (size_t i = 0; i < n; ++i) {
+                    encrypted_images[i].at<uchar>(row, col * string_len + j) =
+                        static_cast<uchar>((image.at<uchar>(row, col) == 255)
+                            ? S0[indices_s[j]][i]
+                            : S1[indices_s[j]][i]);
                 }
             }
-
         }
     }
-    for (int i = 0; i < n; ++i) {
+    for (size_t i = 0; i < n; ++i) {
         std::string filename = folder + "\\" + name_files + std::to_string(i) + ".png";
 
-        if (!cv::imwrite(filename, encodedImage)) {
+        if (!cv::imwrite(filename, encrypted_image)) {
             std::cerr << "Error: can't save image " << filename << "!" << std::endl;
         }
         else {
@@ -143,6 +150,8 @@ void encrypt_image(size_t n,
             S0.insert(S0.end(), Tmp1.begin(), Tmp1.end());
             if (r % 2 == 0 && j == r)
                 j = n - r - 1;
+            if (j >= n)
+                break;
             auto Tmp2 = create_boolean_matrix(n, j + 1, c[j > r ? n - j - 1 : (j + 1)%c.size()]);
             S1.insert(S1.end(), Tmp2.begin(), Tmp2.end());
         }
@@ -157,7 +166,7 @@ void encrypt_image(size_t n,
                 j = n - r;
             if (j >= n)
                 break;
-            auto Tmp2 = create_boolean_matrix(n,  j + 1, c[j > r ? n - j : (j + 1) % c.size()]);
+            auto Tmp2 = create_boolean_matrix(n, n < j + 1 ? n : j + 1, c[j > r ? n - j : j + 1]);
             S1.insert(S1.end(), Tmp2.begin(), Tmp2.end());
         }
     }

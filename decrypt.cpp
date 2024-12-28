@@ -6,13 +6,13 @@
 
 const std::vector<cv::Mat>& read_images_from_folder(std::vector<cv::Mat>& encrypted_images, const std::filesystem::path& folder) {
     for (const auto& entry : std::filesystem::directory_iterator(folder)) {
-        cv::Mat encoded_image = cv::imread(entry.path().string(), cv::IMREAD_GRAYSCALE); // < add binarization
-        cv::threshold(encoded_image, encoded_image, 127, 255, cv::THRESH_BINARY);
-        if (encoded_image.empty()) {
+        cv::Mat encrypted_image = cv::imread(entry.path().string(), cv::IMREAD_GRAYSCALE);
+        cv::threshold(encrypted_image, encrypted_image, 127, 255, cv::THRESH_BINARY);
+        if (encrypted_image.empty()) {
             throw std::invalid_argument(" Failed to read image from " + entry.path().string());
             continue;
         }
-        encrypted_images.push_back(encoded_image);
+        encrypted_images.push_back(encrypted_image);
     }
     if (encrypted_images.empty()) {
         throw std::invalid_argument(" No images were read");
@@ -39,29 +39,23 @@ cv::Mat decrypt_images(
     int rows = encrypted_images[0].rows;
     int cols = encrypted_images[0].cols;
 
-    cv::Mat decrypted_images(rows, cols / n, CV_8UC1, cv::Scalar(0));
-    for (int y = 0; y < rows; ++y) {
-        for (int x = 0; x < cols; x += n) {
-            std::vector<size_t> els(n, 0);
-            for (int xi = x; xi < x + n; ++xi) {
-                for (int i = 0; i < num_imgs; ++i) {
-                    if (els[i] != encrypted_images[i].at<uchar>(y, xi))
-                        els[i] = 0;
-                    else
-                        els[i] = 255;
-                }
+    cv::Mat decrypted_image(rows, cols, CV_8UC1, cv::Scalar(0));
+    for (size_t y = 0; y < rows; ++y) {
+        for (size_t x = 0; x < cols; x += n) {
+            decrypted_image.at<uchar>(y, x) = 0;
+            for (size_t i = 0; i < n; ++i) {
+                if (decrypted_image.at<uchar>(y, x) != encrypted_images[i].at<uchar>(y, x))
+                    decrypted_image.at<uchar>(y, x) = 0;
+                else
+                    decrypted_image.at<uchar>(y, x) = 255;
             }
-            size_t sum = 0;
-            for (auto i : els)
-                sum += i;
-            decrypted_images.at<uchar>(y, x / n) = sum / n > 127 ? 255: 0;
         }
     }
-    if (!cv::imwrite(path_to_decrypted_file, decrypted_images)) {
+    if (!cv::imwrite(path_to_decrypted_file, decrypted_image)) {
         std::cerr << "Error: can't write " << path_to_decrypted_file << "!" << std::endl;
     }
     else {
         std::cout << "Complete: " << path_to_decrypted_file << std::endl;
     }
-    return decrypted_images;
+    return decrypted_image;
 }
