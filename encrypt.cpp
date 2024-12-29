@@ -40,19 +40,23 @@ size_t binomial(size_t n,
 
 
 cv::Mat create_boolean_matrix(size_t n, size_t i, size_t c) {
-    std::vector<uchar> row(n, 0);
+    std::vector<size_t> row(n, 0);
     std::fill(row.end() - i, row.end(), 255);
 
-    std::vector<std::vector<uchar>> matrix;
+    std::vector<std::vector<size_t>> matrix;
     do {
         for (size_t i = 0; i < c; ++i)
             matrix.push_back(row);
     } while (std::next_permutation(row.begin(), row.end()));
-
+    for (size_t i = 0; i < matrix.size(); ++i) {
+        for (size_t j = 0; j < matrix[0].size(); ++j)
+            std::cout << int(matrix[i][j]) << " ";
+        std::cout << std::endl;
+    }
     cv::Mat result(n, matrix.size(), CV_8U);
     for (size_t i = 0; i < matrix.size(); ++i) {
         for (size_t j = 0; j < n; ++j) {
-            result.at<uchar>(i, j) = matrix[i][j];
+            result.at<uchar>(i, j) = uchar(matrix[i][j]);
         }
     }
     return result;
@@ -92,8 +96,9 @@ void encrypt_and_save_images(const cv::Mat& image,
     std::iota(indices_s.begin(), indices_s.end(), 0);
     std::mt19937 gen(1444);
     
-    cv::Mat encrypted_image(rows, new_width, CV_8U, cv::Scalar(255));
-    std::vector<cv::Mat> encrypted_images(n, encrypted_image);
+    std::vector<cv::Mat> encrypted_images;
+    for (size_t i = 0; i < n; ++i)
+        encrypted_images.push_back(cv::Mat::zeros(rows, new_width, CV_8U));
     for (size_t row = 0; row < rows; ++row) {
         for (size_t col = 0; col < cols; ++col) {
             std::shuffle(indices_s.begin(), indices_s.end(), gen);
@@ -110,7 +115,7 @@ void encrypt_and_save_images(const cv::Mat& image,
     for (size_t i = 0; i < n; ++i) {
         std::string filename = folder + "\\" + name_files + std::to_string(i) + ".png";
 
-        if (!cv::imwrite(filename, encrypted_image)) {
+        if (!cv::imwrite(filename, encrypted_images[i])) {
             std::cerr << "Error: can't save image " << filename << "!" << std::endl;
         }
         else {
@@ -146,6 +151,8 @@ void encrypt_image(size_t n,
                 S0 = Tmp.clone();
             else
                 cv::hconcat(S0, Tmp, S0);
+            
+            std::cout << std::endl;
             if (r % 2 == 0 && j == r)
                 j = n - r - 1;
             if (j >= n)
@@ -155,6 +162,7 @@ void encrypt_image(size_t n,
                 S1 = Tmp.clone();
             else
                 cv::hconcat(S1, Tmp, S1);
+            
         }
     }
     else {
@@ -166,27 +174,25 @@ void encrypt_image(size_t n,
                 S0 = Tmp.clone();
             else
                 cv::hconcat(S0, Tmp, S0);
+
+
             if (r % 2 == 0 && j == r)
                 j = n - r;
             if (j >= n)
                 break;
-            Tmp = create_boolean_matrix(n, n < j + 1 ? n : j + 1, c[j > r ? n - j : j + 1]);
+            Tmp = create_boolean_matrix(n, n < j + 1 ? n : j + 1, c[j > r ? n - j : (j + 1) % c.size()]);
             if (S1.empty())
                 S1 = Tmp.clone();
             else
                 cv::hconcat(S1, Tmp, S1);
         }
     }
-    for (size_t i = 0; i < S0.cols; ++i) {
-        for (size_t j = 0; j < S0.rows; ++j)
-            std::cout << size_t(S0.at<uchar>(i, j)) << " ";
-        std::cout << std::endl;
-    }
+    
     std::cout << std::endl;
-    for (size_t i = 0; i < S1.cols; ++i) {
-        for (size_t j = 0; j < S1.rows; ++j)
-            std::cout << size_t(S1.at<uchar>(i, j)) << " ";
+    for (size_t i = 0; i < S1.rows; ++i) {
+        for (size_t j = 0; j < S1.cols; ++j)
+            std::cout << int(S1.at<uchar>(i, j)) << " ";
         std::cout << std::endl;
     }
-    encrypt_and_save_images(gray_image, S0, S1, folder, n, files_names);
+    //encrypt_and_save_images(gray_image, S0, S1, folder, n, files_names);
 }

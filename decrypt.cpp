@@ -28,7 +28,7 @@ const std::vector<cv::Mat>& read_images_from_folder(std::vector<cv::Mat>& encryp
 
 
 cv::Mat decrypt_images(
-    int n,
+    int m,
     const std::filesystem::path& folder, 
     const std::string& path_to_decrypted_file) {
 
@@ -38,19 +38,28 @@ cv::Mat decrypt_images(
     size_t num_imgs = encrypted_images.size();
     int rows = encrypted_images[0].rows;
     int cols = encrypted_images[0].cols;
-
-    cv::Mat decrypted_image(rows, cols, CV_8UC1, cv::Scalar(0));
+    int o = 0;
+    cv::Mat decrypted_image(rows, cols / m, CV_8U, cv::Scalar(255));
     for (size_t y = 0; y < rows; ++y) {
-        for (size_t x = 0; x < cols; x += n) {
-            decrypted_image.at<uchar>(y, x) = 0;
-            for (size_t i = 0; i < n; ++i) {
-                if (decrypted_image.at<uchar>(y, x) != encrypted_images[i].at<uchar>(y, x))
-                    decrypted_image.at<uchar>(y, x) = 0;
+        for (size_t x = 0; x < cols; ++x) {
+            for (size_t i = 1; i < encrypted_images.size(); ++i) {
+                if (encrypted_images[0].at<uchar>(y, x) != encrypted_images[i].at<uchar>(y, x))
+                    encrypted_images[0].at<uchar>(y, x) = 255;
                 else
-                    decrypted_image.at<uchar>(y, x) = 255;
+                    encrypted_images[0].at<uchar>(y, x) = 0;
             }
         }
+        for (size_t x = 0; x < cols / m; ++x) {
+            size_t sum = 0;
+            for (size_t i = 0; i < m; ++i)
+                sum += encrypted_images[0].at<uchar>(y, x * m + i);
+            decrypted_image.at<uchar>(y, x) = sum / m < 127 ?
+                255 :
+                0;
+        }
     }
+    decrypted_image.convertTo(decrypted_image, CV_8U);
+    cv::imwrite("oooo.png", encrypted_images[0]);
     if (!cv::imwrite(path_to_decrypted_file, decrypted_image)) {
         std::cerr << "Error: can't write " << path_to_decrypted_file << "!" << std::endl;
     }
