@@ -4,6 +4,7 @@
 #include "decrypt.h"
 
 int main(int argc, char* argv[]) {
+    auto start = std::chrono::high_resolution_clock::now();
     if (std::string(argv[1]) == "encrypt") {
         if (argc != 7) {
             std::cerr << "Usage: " << argv[0] << "  Incorrect number of arguments" << argc << std::endl;
@@ -44,5 +45,9 @@ int main(int argc, char* argv[]) {
         std::cerr << "Invalid action: " << argv[1] << std::endl;
         return 1;
     }
+
+    std::cout << "Program execution time = " << std::chrono::duration<double>(
+        std::chrono::high_resolution_clock::now() -
+        start);
     return 0;
 }

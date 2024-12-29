@@ -31,14 +31,12 @@ cv::Mat decrypt_images(
     int m,
     const std::filesystem::path& folder, 
     const std::string& path_to_decrypted_file) {
-
     std::vector<cv::Mat> encrypted_images;
     read_images_from_folder(encrypted_images, folder);
 
     size_t num_imgs = encrypted_images.size();
     int rows = encrypted_images[0].rows;
     int cols = encrypted_images[0].cols;
-    int o = 0;
     cv::Mat decrypted_image(rows, cols / m, CV_8U, cv::Scalar(255));
     for (size_t y = 0; y < rows; ++y) {
         for (size_t x = 0; x < cols; ++x) {
@@ -59,7 +57,6 @@ cv::Mat decrypt_images(
         }
     }
     decrypted_image.convertTo(decrypted_image, CV_8U);
-    cv::imwrite("oooo.png", encrypted_images[0]);
     if (!cv::imwrite(path_to_decrypted_file, decrypted_image)) {
         std::cerr << "Error: can't write " << path_to_decrypted_file << "!" << std::endl;
     }

@@ -75,7 +75,6 @@ void encrypt_and_save_images(const cv::Mat& image,
     size_t n,
     const std::string& name_files
 ) {
-    cv::imwrite("D:\\Course_paper\\nnnn.png", image);
     make_folder(folder);
     size_t rows = image.rows;
     size_t cols = image.cols;
@@ -85,7 +84,7 @@ void encrypt_and_save_images(const cv::Mat& image,
     std::iota(indices_s.begin(), indices_s.end(), 0);
     std::mt19937 gen(1444);
     std::vector<cv::Mat> encrypted_images;
-    size_t c = 0;
+
     for (size_t i = 0; i < n; ++i)
         encrypted_images.push_back(cv::Mat::zeros(rows, new_width, CV_8U));
     for (size_t row = 0; row < rows; ++row) {
@@ -102,9 +101,7 @@ void encrypt_and_save_images(const cv::Mat& image,
 
         }
     }
-    std::cout << std::endl;
-    std::cout << string_len;
-    std::cout << std::endl;
+    std::cout << "m = " << string_len  << std::endl;
     for (size_t i = 0; i < n; ++i) {
         std::string filename = folder + "\\" + name_files + std::to_string(i) + ".png";
 
@@ -124,7 +121,6 @@ void encrypt_image(size_t n,
     const std::string& folder,
     const std::string& files_names
 ) {
-
     cv::Mat gray_image = read_binary(image_path);
     size_t r = k / 2;
     bool is_odd = k % 2;
@@ -135,7 +131,7 @@ void encrypt_image(size_t n,
         c[j] = binomial(n - r - is_odd - j, r - j);
     }
     std::vector<std::vector<size_t>> S0, S1;
-        if (is_odd) {
+    if (is_odd) {
         for (int j = 0; j < n; j += 2) {
             if (r % 2 && j == r + 1)
                 j = n - r;
@@ -162,13 +158,6 @@ void encrypt_image(size_t n,
             auto Tmp2 = create_boolean_matrix(n, n < j + 1 ? n : j + 1, c[j > r ? n - j : j + 1]);
             S1.insert(S1.end(), Tmp2.begin(), Tmp2.end());
         }
-    }
-    
-    std::cout << std::endl;
-    for (size_t i = 0; i < S0[0].size(); ++i) {
-        for (size_t j = 0; j < S0.size(); ++j)
-            std::cout << S0[j][i]<< " ";
-        std::cout << std::endl;
     }
     encrypt_and_save_images(gray_image, S0, S1, folder, n, files_names);
 }
