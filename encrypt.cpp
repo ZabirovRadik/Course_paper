@@ -75,6 +75,7 @@ void encrypt_and_save_images(const cv::Mat& image,
     size_t n,
     const std::string& name_files
 ) {
+    cv::imwrite("mapp.png", image);
     make_folder(folder);
     size_t rows = image.rows;
     size_t cols = image.cols;
@@ -98,19 +99,16 @@ void encrypt_and_save_images(const cv::Mat& image,
                             : S1[indices_s[j]][i]);
                 }
             }
-
         }
     }
     std::cout << "m = " << string_len  << std::endl;
     for (size_t i = 0; i < n; ++i) {
         std::string filename = folder + "\\" + name_files + std::to_string(i) + ".png";
 
-        if (!cv::imwrite(filename, encrypted_images[i])) {
+        if (!cv::imwrite(filename, encrypted_images[i]))
             std::cerr << "Error: can't save image " << filename << "!" << std::endl;
-        }
-        else {
+        else 
             std::cout << "Image saved: " << filename << std::endl;
-        }
     }
 }
 
@@ -124,8 +122,8 @@ void encrypt_image(size_t n,
     cv::Mat gray_image = read_binary(image_path);
     size_t r = k / 2;
     bool is_odd = k % 2;
-    if (n < k || n - r - 1 < 1)
-        return;
+    if (n < k)
+        throw std::invalid_argument(" Invalid arguments, n must be less, than k");
     std::vector<size_t> c(r + 1);
     for (size_t j = 0; j <= r; ++j) {
         c[j] = binomial(n - r - is_odd - j, r - j);

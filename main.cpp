@@ -33,7 +33,8 @@ int main(int argc, char* argv[]) {
             size_t n = std::stoul(argv[2]);
         }
         catch (const std::exception& e) {
-            throw std::invalid_argument(e.what());
+            std::cerr << e.what();
+
         }
         decrypt_images(
             std::stoul(argv[2]),  // n

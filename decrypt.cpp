@@ -6,12 +6,10 @@
 
 const std::vector<cv::Mat>& read_images_from_folder(std::vector<cv::Mat>& encrypted_images, const std::filesystem::path& folder) {
     for (const auto& entry : std::filesystem::directory_iterator(folder)) {
-        cv::Mat encrypted_image = cv::imread(entry.path().string(), cv::IMREAD_GRAYSCALE);
-        cv::threshold(encrypted_image, encrypted_image, 127, 255, cv::THRESH_BINARY);
-        if (encrypted_image.empty()) {
+        cv::Mat encrypted_image;
+        encrypted_image = cv::imread(entry.path().string(), cv::IMREAD_GRAYSCALE);
+        if (encrypted_image.empty())
             throw std::invalid_argument(" Failed to read image from " + entry.path().string());
-            continue;
-        }
         encrypted_images.push_back(encrypted_image);
     }
     if (encrypted_images.empty()) {
@@ -21,7 +19,7 @@ const std::vector<cv::Mat>& read_images_from_folder(std::vector<cv::Mat>& encryp
     cv::Size firstSize = encrypted_images[0].size();
     for (const auto& img : encrypted_images) {
         if (img.size() != firstSize)
-            throw std::invalid_argument(" The sizes of the images are different, decoding is impossible");
+            throw std::invalid_argument(" The sizes of the images are different, decryption is impossible");
     }
     return encrypted_images;
 }
@@ -37,7 +35,7 @@ cv::Mat decrypt_images(
     size_t num_imgs = encrypted_images.size();
     int rows = encrypted_images[0].rows;
     int cols = encrypted_images[0].cols;
-    cv::Mat decrypted_image(rows, cols / m, CV_8U, cv::Scalar(255));
+    cv::Mat decrypted_image(rows, cols / m, CV_8U);
     for (size_t y = 0; y < rows; ++y) {
         for (size_t x = 0; x < cols; ++x) {
             for (size_t i = 1; i < encrypted_images.size(); ++i) {
