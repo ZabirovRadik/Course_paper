@@ -153,7 +153,7 @@ void encrypt_image(size_t n,
                 j = n - r;
             if (j >= n)
                 break;
-            auto Tmp2 = create_boolean_matrix(n, n < j + 1 ? n : j + 1, c[j > r ? n - j : j + 1]);
+            auto Tmp2 = create_boolean_matrix(n, n < j + 1 ? n : j + 1, c[j > r ? n - j : (j + 1) % c.size()]);
             S1.insert(S1.end(), Tmp2.begin(), Tmp2.end());
         }
     }

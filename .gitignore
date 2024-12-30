@@ -17,6 +17,8 @@ Cat.jpg
 map.png
 forest.jpg
 many_peoples.jpg
+/images
+/experiment
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 

@@ -37,7 +37,7 @@ int main(int argc, char* argv[]) {
 
         }
         decrypt_images(
-            std::stoul(argv[2]),  // n
+            std::stoul(argv[2]),  // m
             argv[3],              // folder of encoded files
             argv[4]               // path to result
         );
